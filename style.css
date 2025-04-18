@@ -1,7 +1,7 @@
 body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(to right, #222, #050505);
+  background: linear-gradient(to right, #111, #000);
   font-family: Arial, sans-serif;
   color: white;
 }
@@ -9,7 +9,7 @@ body {
 .container {
   max-width: 500px;
   margin: 50px auto;
-  background: #111;
+  background: #121212;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 10px #00ff88;
@@ -26,7 +26,7 @@ input, button {
 }
 
 input {
-  background: #333;
+  background: #222;
   color: white;
 }
 
@@ -34,11 +34,21 @@ button {
   background: #00ff88;
   color: black;
   font-weight: bold;
+  cursor: pointer;
 }
 
 a {
   color: #00ff88;
   text-decoration: none;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #00ff88;
+  color: black;
+  margin: 10px auto;
+  border-radius: 5px;
 }
 
 .social a {
@@ -49,5 +59,18 @@ a {
 footer {
   margin-top: 20px;
   font-size: 12px;
-  color: #999;
+  color: #aaa;
+}
+
+/* Bouton retour en haut */
+.top-link {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #00ff88;
+  color: black;
+  padding: 10px 15px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
 }
