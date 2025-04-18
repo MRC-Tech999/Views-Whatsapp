@@ -1,76 +1,57 @@
 body {
-  margin: 0;
-  padding: 0;
-  background: linear-gradient(to right, #111, #000);
-  font-family: Arial, sans-serif;
-  color: white;
+    font-family: Arial, sans-serif;
+    background-color: #f1f1f1;
+    margin: 0;
+    padding: 0;
 }
 
 .container {
-  max-width: 500px;
-  margin: 50px auto;
-  background: #121212;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px #00ff88;
-  text-align: center;
+    max-width: 500px;
+    margin: 50px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2, h3 {
+    color: #333;
+}
+
+p {
+    color: #555;
+    font-size: 16px;
 }
 
 input, button {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border: none;
-  border-radius: 5px;
+    width: 90%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
-input {
-  background: #222;
-  color: white;
+button, .btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    text-decoration: none;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 10px;
+    transition: background 0.3s ease;
 }
 
-button {
-  background: #00ff88;
-  color: black;
-  font-weight: bold;
-  cursor: pointer;
+.btn:hover, button:hover {
+    background-color: #0056b3;
 }
 
-a {
-  color: #00ff88;
-  text-decoration: none;
+.contact {
+    margin-top: 30px;
 }
 
-.btn {
-  display: inline-block;
-  padding: 10px 20px;
-  background: #00ff88;
-  color: black;
-  margin: 10px auto;
-  border-radius: 5px;
-}
-
-.social a {
-  display: block;
-  margin-top: 10px;
-}
-
-footer {
-  margin-top: 20px;
-  font-size: 12px;
-  color: #aaa;
-}
-
-/* Bouton retour en haut */
-.top-link {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #00ff88;
-  color: black;
-  padding: 10px 15px;
-  border-radius: 5px;
-  text-decoration: none;
-  font-weight: bold;
+.contact a {
+    color: #007bff;
+    text-decoration: none;
 }
