@@ -3,11 +3,11 @@ $name = trim($_POST['name']);
 $number = trim($_POST['number']);
 
 if (!$name || !$number) {
-    die("Nom ou numéro invalide.");
+    die("Nom ou numéro manquant.");
 }
 
 if (!preg_match('/^\+\d{6,15}$/', $number)) {
-    die("Numéro invalide. Format requis : +codepays...");
+    die("Numéro invalide.");
 }
 
 $file = 'contacts.csv';
@@ -22,6 +22,7 @@ foreach ($lines as $line) {
 
 file_put_contents($file, "$name,$number\n", FILE_APPEND);
 
+// redirection vers page de confirmation
 header("Location: confirmation.php");
 exit;
 ?>
