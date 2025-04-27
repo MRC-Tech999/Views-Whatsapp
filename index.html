@@ -2,23 +2,59 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>WhatsApp Views</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Voir le code source d'un site</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f9f9f9;
+        }
+        input {
+            width: 300px;
+            padding: 10px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 15px;
+        }
+        pre {
+            background-color: #efefef;
+            padding: 15px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>WhatsApp Views</h1>
-        <p>
-            Augmente automatiquement ton nombre de contacts WhatsApp pour générer plus de vues sur tes statuts.
-            Télécharge un fichier VCF avec plus de 2000 contacts actifs !
-        </p>
-        <a href="form.php" class="btn">Continuer</a>
+    <h1>Voir le code source d'un site</h1>
+    <form method="POST">
+        <input type="text" name="url" placeholder="https://exemple.com" required>
+        <button type="submit">Afficher</button>
+    </form>
 
-        <div class="contact">
-            <h3>Contactez-nous</h3>
-            <p>Instagram : <a href="https://instagram.com/j.m.h.2024" target="_blank">@j.m.h.2024</a></p>
-            <p>Email : <a href="mailto:contactwhatsappviews@gmail.com">contactwhatsappviews@gmail.com</a></p>
-        </div>
-    </div>
+    <?php
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $url = filter_var($_POST['url'], FILTER_VALIDATE_URL);
+        if ($url) {
+            $options = [
+                "http" => [
+                    "method" => "GET",
+                    "header" => "User-Agent: PHP"
+                ]
+            ];
+            $context = stream_context_create($options);
+            $html = @file_get_contents($url, false, $context);
+            if ($html !== false) {
+                echo "<h2>Code source de : {$url}</h2>";
+                echo "<pre>" . htmlspecialchars($html) . "</pre>";
+            } else {
+                echo "<p style='color:red;'>Erreur lors de la récupération du code source.</p>";
+            }
+        } else {
+            echo "<p style='color:red;'>URL invalide.</p>";
+        }
+    }
+    ?>
 </body>
 </html>
