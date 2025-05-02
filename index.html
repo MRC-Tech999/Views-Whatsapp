@@ -3,213 +3,222 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MarcGPT</title>
+  <title>MarcGPT - v1</title>
   <style>
-    body { background: #121212; color: #fff; font-family: 'Segoe UI', sans-serif; margin:0; padding:0; }
-    .container { max-width:800px; margin:auto; padding:20px; }
-    h2 { text-align:center; color:#4da6ff; }
-    .hidden { display:none; }
-    form, #chat { background:#1e1e1e; border-radius:10px; padding:20px; margin-bottom:20px; }
-    input { width:100%; margin:8px 0; padding:10px; border:none; border-radius:5px; background:#2a2a2a; color:#fff; }
-    button { width:100%; padding:10px; margin-top:8px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer; }
-    button:hover { background:#0056b3; }
-    #guestBtn { background:#6c757d; }
-    #guestBtn:hover { background:#5a6268; }
-    #logout { background:#dc3545; }
-    #logout:hover { background:#c82333; }
-    #chat { max-height:60vh; overflow-y:auto; }
-    .message { margin:10px 0; position:relative; padding:8px 12px; border-radius:8px; }
-    .user { background:#0059b3; text-align:right; }
-    .bot  { background:#2a2a2a; text-align:left; }
-    .copy-btn { position:absolute; top:5px; right:8px; background:none; border:none; color:#bbb; font-size:12px; cursor:pointer; }
-    .copy-btn:hover { color:#fff; }
-    .input-area { display:flex; gap:10px; margin-top:10px; }
-    #userInput { flex:1; }
-    #sendBtn { width:auto; }
-    @media(max-width:600px){ .input-area { flex-direction:column; } button { width:100%!important; } }
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    #chat {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4da6ff;
+    }
+
+    .message {
+      display: flex;
+      margin: 10px 0;
+      position: relative;
+    }
+
+    .user, .bot {
+      background-color: #1e1e1e;
+      padding: 10px 15px;
+      border-radius: 10px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .user {
+      margin-left: auto;
+      background-color: #0059b3;
+    }
+
+    .bot {
+      margin-right: auto;
+      background-color: #2a2a2a;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      color: #bbb;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      color: #fff;
+    }
+
+    .input-area {
+      display: flex;
+      margin-top: 20px;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background-color: #2a2a2a;
+      color: #fff;
+    }
+
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    @media screen and (max-width: 600px) {
+      .input-area {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+
+    .profile-img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>MarcGPT</h2>
-
-    <!-- AUTHENTIFICATION -->
-    <div id="authSection">
-      <form id="authForm">
-        <input type="email" id="email" placeholder="Email" required />
-        <input type="password" id="password" placeholder="Mot de passe" required />
-        <button type="submit">Se connecter / S'inscrire</button>
-      </form>
-      <button id="guestBtn">Stay Logged Out</button>
-    </div>
-
-    <!-- CHAT -->
-    <div id="chatSection" class="hidden">
-      <div id="chat"></div>
-      <div class="input-area">
-        <input type="text" id="userInput" placeholder="Écris ton message ici…" />
-        <button id="sendBtn">Envoyer</button>
-      </div>
-      <button id="logout">Log out</button>
+  <div id="chat">
+    <h2>MarcGPT - v1</h2>
+    <div id="conversation"></div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Écris ton message ici..." />
+      <button onclick="sendMessage()">Envoyer</button>
     </div>
   </div>
 
   <script>
-    // Éléments
-    const authForm    = document.getElementById('authForm');
-    const guestBtn    = document.getElementById('guestBtn');
-    const authSection = document.getElementById('authSection');
-    const chatSection = document.getElementById('chatSection');
-    const chatDiv     = document.getElementById('chat');
-    const userInput   = document.getElementById('userInput');
-    const sendBtn     = document.getElementById('sendBtn');
-    const logoutBtn   = document.getElementById('logout');
+    const conversation = [];
 
-    // Stockage local
-    let users = JSON.parse(localStorage.getItem('users') || '{}');
-    let currentUser = localStorage.getItem('currentUser');
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const text = input.value.trim();
+      if (!text) return;
 
-    // Affiche le chat
-    function showChat() {
-      authSection.classList.add('hidden');
-      chatSection.classList.remove('hidden');
-      chatDiv.innerHTML = '';
-      if (currentUser && users[currentUser]?.messages) {
-        users[currentUser].messages.forEach(msg => renderMessage(msg.role, msg.content));
-      }
+      conversation.push({ role: "user", content: text });
+      renderMessage("user", text);
+      input.value = "";
+
+      const typingMsg = renderTypingIndicator(text);
+
+      let botResponse = await fetch("https://open-ai21.p.rapidapi.com/conversationllama", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-rapidapi-host": "open-ai21.p.rapidapi.com",
+          "x-rapidapi-key": "ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d"
+        },
+        body: JSON.stringify({
+          messages: conversation,
+          web_access: false
+        })
+      })
+      .then(res => res.json())
+      .then(data => data.result)
+      .catch(() => "Erreur IA.");
+
+      const humanResponse = await fetch("https://chatgpt-42.p.rapidapi.com/aitohuman", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-rapidapi-host": "chatgpt-42.p.rapidapi.com",
+          "x-rapidapi-key": "ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d"
+        },
+        body: JSON.stringify({ text: botResponse })
+      })
+      .then(res => res.json())
+      .then(data => data.human || botResponse)
+      .catch(() => botResponse);
+
+      conversation.push({ role: "assistant", content: humanResponse });
+
+      typingMsg.remove();
+      renderMessage("bot", humanResponse);
     }
 
-    // Rendu d'un message
-    function renderMessage(role, content) {
-      const div = document.createElement('div');
-      div.classList.add('message', role);
-      div.textContent = content;
-      if (role === 'bot') {
-        const btn = document.createElement('button');
-        btn.className = 'copy-btn';
-        btn.textContent = '⧉';
-        btn.onclick = () => navigator.clipboard.writeText(content);
-        div.appendChild(btn);
-      }
-      chatDiv.appendChild(div);
-      chatDiv.scrollTop = chatDiv.scrollHeight;
-    }
+    function renderTypingIndicator(text) {
+      const chat = document.getElementById("conversation");
+      const div = document.createElement("div");
+      div.className = "message";
 
-    // Indicateur de saisie
-    function renderTyping() {
-      const div = document.createElement('div');
-      div.className = 'message bot';
-      div.textContent = 'MarcGPT is typing...';
-      chatDiv.appendChild(div);
-      chatDiv.scrollTop = chatDiv.scrollHeight;
+      const bubble = document.createElement("div");
+      bubble.className = "bot";
+
+      // Ajout de l'image de profil pour la saisie
+      const profileImg = document.createElement("img");
+      profileImg.src = "https://files.fm/u/u37gkxrnph"; // Remplacez par l'URL de ton image de profil
+      profileImg.className = "profile-img";
+
+      const isFrench = /[àâçéèêëîïôûùüÿœ]/i.test(text) || /comment|bonjour|salut|est-ce/i.test(text);
+      bubble.textContent = isFrench ? "MarcGPT est en train d'écrire..." : "MarcGPT is typing...";
+
+      div.appendChild(profileImg);
+      div.appendChild(bubble);
+      chat.appendChild(div);
+      div.scrollIntoView({ behavior: "smooth" });
+
       return div;
     }
 
-    // Authentification
-    authForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const email = emailEl.value.trim();
-      const pwd   = passwordEl.value.trim();
-      if (!email || !pwd) return alert('Remplis tous les champs');
-      if (!users[email]) {
-        users[email] = { password: pwd, messages: [] };
-        localStorage.setItem('users', JSON.stringify(users));
-        alert('Inscription réussie');
-      } else if (users[email].password !== pwd) {
-        return alert('Mot de passe incorrect');
-      }
-      currentUser = email;
-      localStorage.setItem('currentUser', email);
-      showChat();
-    });
+    function renderMessage(role, text) {
+      const chat = document.getElementById("conversation");
+      const div = document.createElement("div");
+      div.className = "message";
 
-    // Mode invité
-    guestBtn.addEventListener('click', () => {
-      currentUser = null;
-      localStorage.removeItem('currentUser');
-      showChat();
-    });
+      const bubble = document.createElement("div");
+      bubble.className = role;
+      bubble.textContent = text;
 
-    // Déconnexion
-    logoutBtn.addEventListener('click', () => {
-      currentUser = null;
-      localStorage.removeItem('currentUser');
-      chatSection.classList.add('hidden');
-      authSection.classList.remove('hidden');
-    });
-
-    // Envoi de message
-    sendBtn.addEventListener('click', async () => {
-      const text = userInput.value.trim();
-      if (!text) return;
-      renderMessage('user', text);
-      userInput.value = '';
-
-      // indicateur
-      const typingDiv = renderTyping();
-
-      let reply;
-      if (currentUser) {
-        // --- API Gemini Pro (exactement ton curl) ---
-        const payload = {
-          contents: [
-            { role: "user", parts: [{ text }] }
-          ]
-        };
-        const res = await fetch(
-          'https://gemini-pro-ai-new.p.rapidapi.com/chat?key=AIzaSyDZt1mpiniiBIWYbXjzSujIvmigUOkqU6E',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-rapidapi-host': 'gemini-pro-ai-new.p.rapidapi.com',
-              'x-rapidapi-key': 'ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d'
-            },
-            body: JSON.stringify(payload)
-          }
-        );
-        const json = await res.json();
-        reply = json.contents?.[0]?.parts?.[0]?.text
-                 || "Désolé, pas de réponse de Gemini.";
-      } else {
-        // --- API GPT (conversationllama) ---
-        const res = await fetch("https://open-ai21.p.rapidapi.com/conversationllama", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-rapidapi-host": "open-ai21.p.rapidapi.com",
-            "x-rapidapi-key": "ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d"
-          },
-          body: JSON.stringify({
-            messages: [{ role: "user", content: text }],
-            web_access: false
-          })
-        });
-        const data = await res.json();
-        reply = data.result || "Désolé, pas compris.";
+      if (role === "bot") {
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "copy-btn";
+        copyBtn.innerText = "⧉";
+        copyBtn.title = "Copier";
+        copyBtn.onclick = () => navigator.clipboard.writeText(text);
+        bubble.appendChild(copyBtn);
       }
 
-      // retire l'indicateur
-      typingDiv.remove();
-      renderMessage('bot', reply);
-
-      // enregistrement si connecté
-      if (currentUser) {
-        users = JSON.parse(localStorage.getItem('users'));
-        users[currentUser].messages.push({ role:'user', content: text });
-        users[currentUser].messages.push({ role:'bot',  content: reply });
-        localStorage.setItem('users', JSON.stringify(users));
-      }
-    });
-
-    // Au chargement, si déjà connecté...
-    window.addEventListener('load', () => {
-      const saved = localStorage.getItem('currentUser');
-      if (saved && users[saved]) {
-        currentUser = saved;
-        showChat();
-      }
-    });
+      div.appendChild(bubble);
+      chat.appendChild(div);
+      div.scrollIntoView({ behavior: "smooth" });
+    }
   </script>
+
 </body>
 </html>
