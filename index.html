@@ -1,60 +1,242 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Voir le code source d'un site</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-            background-color: #f9f9f9;
-        }
-        input {
-            width: 300px;
-            padding: 10px;
-            margin-right: 10px;
-        }
-        button {
-            padding: 10px 15px;
-        }
-        pre {
-            background-color: #efefef;
-            padding: 15px;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MarcGPT - v1</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    #chat {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4da6ff;
+    }
+
+    .message {
+      display: flex;
+      margin: 10px 0;
+      position: relative;
+    }
+
+    .user, .bot {
+      background-color: #1e1e1e;
+      padding: 10px 15px;
+      border-radius: 10px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .user {
+      margin-left: auto;
+      background-color: #0059b3;
+    }
+
+    .bot {
+      margin-right: auto;
+      background-color: #2a2a2a;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      color: #bbb;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      color: #fff;
+    }
+
+    .input-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background-color: #2a2a2a;
+      color: #fff;
+    }
+
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    @media screen and (max-width: 600px) {
+      .input-area {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-    <h1>Voir le code source d'un site</h1>
-    <form method="POST">
-        <input type="text" name="url" placeholder="https://exemple.com" required>
-        <button type="submit">Afficher</button>
-    </form>
+  <div id="chat">
+    <h2>MarcGPT - v1</h2>
+    <div id="conversation"></div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Écris ton message ici..." />
+      <button onclick="sendMessage()">Envoyer</button>
+      <button onclick="document.getElementById('imageInput').click()">Photo/Exercice</button>
+      <input type="file" accept="image/*" id="imageInput" onchange="sendImage(event)">
+    </div>
+  </div>
 
-    <?php
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $url = filter_var($_POST['url'], FILTER_VALIDATE_URL);
-        if ($url) {
-            $options = [
-                "http" => [
-                    "method" => "GET",
-                    "header" => "User-Agent: PHP"
-                ]
-            ];
-            $context = stream_context_create($options);
-            $html = @file_get_contents($url, false, $context);
-            if ($html !== false) {
-                echo "<h2>Code source de : {$url}</h2>";
-                echo "<pre>" . htmlspecialchars($html) . "</pre>";
-            } else {
-                echo "<p style='color:red;'>Erreur lors de la récupération du code source.</p>";
-            }
-        } else {
-            echo "<p style='color:red;'>URL invalide.</p>";
-        }
+  <script>
+    const conversation = [];
+
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      conversation.push({ role: "user", content: text });
+      renderMessage("user", text);
+      input.value = "";
+
+      const typingMsg = renderTypingIndicator(text);
+
+      let botResponse = await fetch("https://open-ai21.p.rapidapi.com/conversationllama", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-rapidapi-host": "open-ai21.p.rapidapi.com",
+          "x-rapidapi-key": "ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d"
+        },
+        body: JSON.stringify({
+          messages: conversation,
+          web_access: false
+        })
+      })
+      .then(res => res.json())
+      .then(data => data.result)
+      .catch(() => "Erreur IA.");
+
+      const humanResponse = await fetch("https://chatgpt-42.p.rapidapi.com/aitohuman", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-rapidapi-host": "chatgpt-42.p.rapidapi.com",
+          "x-rapidapi-key": "ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d"
+        },
+        body: JSON.stringify({ text: botResponse })
+      })
+      .then(res => res.json())
+      .then(data => data.human || botResponse)
+      .catch(() => botResponse);
+
+      conversation.push({ role: "assistant", content: humanResponse });
+
+      typingMsg.remove();
+      renderMessage("bot", humanResponse);
     }
-    ?>
+
+    async function sendImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      renderMessage("user", "[Image envoyée]");
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const loading = renderTypingIndicator("photo");
+
+      const response = await fetch("https://photo-math-resolver.p.rapidapi.com/", {
+        method: "POST",
+        headers: {
+          "x-rapidapi-host": "photo-math-resolver.p.rapidapi.com",
+          "x-rapidapi-key": "ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d"
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => data.result || "Pas de réponse.")
+      .catch(() => "Erreur de traitement de l'image.");
+
+      conversation.push({ role: "assistant", content: response });
+      loading.remove();
+      renderMessage("bot", response);
+    }
+
+    function renderTypingIndicator(text) {
+      const chat = document.getElementById("conversation");
+      const div = document.createElement("div");
+      div.className = "message";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bot";
+      const isFrench = /[àâçéèêëîïôûùüÿœ]/i.test(text) || /comment|bonjour|salut|est-ce/i.test(text);
+      bubble.textContent = isFrench ? "MarcGPT est en train d'écrire..." : "MarcGPT is typing...";
+
+      div.appendChild(bubble);
+      chat.appendChild(div);
+      div.scrollIntoView({ behavior: "smooth" });
+
+      return div;
+    }
+
+    function renderMessage(role, text) {
+      const chat = document.getElementById("conversation");
+      const div = document.createElement("div");
+      div.className = "message";
+
+      const bubble = document.createElement("div");
+      bubble.className = role;
+      bubble.textContent = text;
+
+      if (role === "bot") {
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "copy-btn";
+        copyBtn.innerText = "⧉";
+        copyBtn.title = "Copier";
+        copyBtn.onclick = () => navigator.clipboard.writeText(text);
+        bubble.appendChild(copyBtn);
+      }
+
+      div.appendChild(bubble);
+      chat.appendChild(div);
+      div.scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
 </body>
 </html>
