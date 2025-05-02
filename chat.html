@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MarcGPT - Chat</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #chat {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4da6ff;
+    }
+    .message {
+      display: flex;
+      margin: 10px 0;
+      position: relative;
+    }
+    .user, .bot {
+      background-color: #1e1e1e;
+      padding: 10px 15px;
+      border-radius: 10px;
+      max-width: 80%;
+      word-wrap: break-word;
+      font-size: 15px;
+    }
+    .user {
+      margin-left: auto;
+      background-color: #0059b3;
+    }
+    .bot {
+      margin-right: auto;
+      background-color: #2a2a2a;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: #bbb;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      color: #fff;
+    }
+    .input-area {
+      display: flex;
+      margin-top: 20px;
+      gap: 10px;
+    }
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background-color: #2a2a2a;
+      color: #fff;
+    }
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #logout {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: #dc3545;
+    }
+    #logout:hover {
+      background-color: #c82333;
+    }
+    @media screen and (max-width: 600px) {
+      .input-area {
+        flex-direction: column;
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <h2>MarcGPT - Chat</h2>
+    <div id="conversation"></div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Écris ton message ici..." />
+      <button onclick="sendMessage()">Envoyer</button>
+    </div>
+    <button id="logout">Log out</button>
+  </div>
+
+  <script>
+    const conversationDiv = document.getElementById('conversation');
+    const userInput = document.getElementById('userInput');
+    const logoutBtn = document.getElementById('logout');
+    const currentUser = localStorage.getItem('currentUser');
+    let messages = [];
+
+    if (currentUser) {
+      const users = JSON.parse(localStorage.getItem('users')) || {};
+      messages = users[currentUser]?.messages || [];
+    }
+
+    messages.forEach(msg => renderMessage(msg.role, msg.content));
+
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('currentUser');
+      window.location.href = 'index.html';
+    });
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      renderMessage('user', text);
+      userInput.value = '';
+
+      const typingMsg = renderTypingIndicator();
+
+      let responseText = '';
+
+      try {
+        if (currentUser) {
+          // Utiliser l'API Gemini
+          const res = await fetch("https://gemini-pro-ai-new.p.rapidapi.com/chat?key=YOUR_GEMINI_API_KEY", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-rapidapi-host": "gemini-pro-ai-new.p.rapidapi.com",
+              "x-rapidapi-key": "YOUR_RAPIDAPI_KEY"
+            },
+            body: JSON.stringify({
+              contents: [
+                { role: "user", parts: [{ text }] }
+              ]
+            })
+          });
+          const data = await res.json();
+          responseText = data.contents?.[0]?.parts?.[0]?.text || "Désolé, je n'ai pas compris.";
+        } else {
+          // Utiliser l'API GPT
+          const res = await fetch("https://open-ai21.p.rapidapi.com/conversationllama", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-rapidapi-host": "open-ai21.p.rapidapi.com",
+              "x-rapidapi-key": "YOUR_RAPIDAPI_KEY"
+            },
+            body: JSON.stringify({
+              messages: [{ role: "user", content: text }],
+              web_access: false
+            })
+          });
+          const data = await res.json();
+          responseText = data.result || "Désolé, je n'ai pas compris.";
+        }
+      } catch (error) {
+        responseText = "Erreur lors de la communication avec l'API.";
+      }
+
+      typingMsg.remove();
+      renderMessage('bot', responseText);
+
+      if (currentUser) {
+        const users = JSON.parse(localStorage.getItem('users')) || {};
+        if (!users[currentUser]) users[currentUser] = { password: '', messages: [] };
+        users[currentUser].messages.push({ role: 'user', content: text });
+        users[currentUser].messages.push({ role: 'bot', content: responseText });
+        localStorage.setItem('users', JSON.stringify(users));
+      }
+    }
+
+    function renderTypingIndicator() {
+      const div = document.createElement("div");
+ 
