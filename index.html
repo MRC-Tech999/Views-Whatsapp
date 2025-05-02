@@ -28,7 +28,6 @@
     .message {
       display: flex;
       margin: 10px 0;
-      position: relative;
     }
 
     .user, .bot {
@@ -37,6 +36,7 @@
       border-radius: 10px;
       max-width: 80%;
       word-wrap: break-word;
+      position: relative;
     }
 
     .user {
@@ -71,7 +71,7 @@
       margin-top: 20px;
     }
 
-    input[type="text"] {
+    input[type="text"], input[type="file"] {
       flex-grow: 1;
       padding: 12px;
       font-size: 16px;
@@ -95,6 +95,12 @@
       background-color: #0056b3;
     }
 
+    img {
+      max-width: 200px;
+      border-radius: 8px;
+      margin-top: 5px;
+    }
+
     @media screen and (max-width: 600px) {
       .input-area {
         flex-direction: column;
@@ -103,10 +109,6 @@
       button {
         width: 100%;
       }
-    }
-
-    input[type="file"] {
-      display: none;
     }
   </style>
 </head>
@@ -117,8 +119,8 @@
     <div class="input-area">
       <input type="text" id="userInput" placeholder="Écris ton message ici..." />
       <button onclick="sendMessage()">Envoyer</button>
-      <button onclick="document.getElementById('imageInput').click()">Photo/Exercice</button>
-      <input type="file" accept="image/*" id="imageInput" onchange="sendImage(event)">
+      <input type="file" id="imageInput" accept="image/*" />
+      <button onclick="sendImage()">Envoyer une image</button>
     </div>
   </div>
 
@@ -143,10 +145,7 @@
           "x-rapidapi-host": "open-ai21.p.rapidapi.com",
           "x-rapidapi-key": "ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d"
         },
-        body: JSON.stringify({
-          messages: conversation,
-          web_access: false
-        })
+        body: JSON.stringify({ messages: conversation, web_access: false })
       })
       .then(res => res.json())
       .then(data => data.result)
@@ -171,15 +170,18 @@
       renderMessage("bot", humanResponse);
     }
 
-    async function sendImage(event) {
-      const file = event.target.files[0];
+    async function sendImage() {
+      const fileInput = document.getElementById("imageInput");
+      const file = fileInput.files[0];
       if (!file) return;
 
-      renderMessage("user", "[Image envoyée]");
+      const imgURL = URL.createObjectURL(file);
+      renderImageMessage("user", imgURL);
+
       const formData = new FormData();
       formData.append("image", file);
 
-      const loading = renderTypingIndicator("photo");
+      const typingMsg = renderTypingIndicator("image");
 
       const response = await fetch("https://photo-math-resolver.p.rapidapi.com/", {
         method: "POST",
@@ -190,11 +192,10 @@
         body: formData
       })
       .then(res => res.json())
-      .then(data => data.result || "Pas de réponse.")
-      .catch(() => "Erreur de traitement de l'image.");
+      .then(data => data.solution || "Pas de solution trouvée.")
+      .catch(() => "Erreur lors de l'analyse de l'image.");
 
-      conversation.push({ role: "assistant", content: response });
-      loading.remove();
+      typingMsg.remove();
       renderMessage("bot", response);
     }
 
@@ -211,7 +212,6 @@
       div.appendChild(bubble);
       chat.appendChild(div);
       div.scrollIntoView({ behavior: "smooth" });
-
       return div;
     }
 
@@ -233,6 +233,24 @@
         bubble.appendChild(copyBtn);
       }
 
+      div.appendChild(bubble);
+      chat.appendChild(div);
+      div.scrollIntoView({ behavior: "smooth" });
+    }
+
+    function renderImageMessage(role, imageURL) {
+      const chat = document.getElementById("conversation");
+      const div = document.createElement("div");
+      div.className = "message";
+
+      const bubble = document.createElement("div");
+      bubble.className = role;
+
+      const img = document.createElement("img");
+      img.src = imageURL;
+      img.alt = "Image envoyée";
+
+      bubble.appendChild(img);
       div.appendChild(bubble);
       chat.appendChild(div);
       div.scrollIntoView({ behavior: "smooth" });
