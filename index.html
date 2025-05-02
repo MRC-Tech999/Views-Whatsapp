@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -12,25 +12,21 @@
       margin: 0;
       padding: 0;
     }
-
     #chat {
       max-width: 800px;
       margin: auto;
       padding: 20px;
     }
-
     h2 {
       text-align: center;
       margin-bottom: 20px;
       color: #4da6ff;
     }
-
     .message {
       display: flex;
       margin: 10px 0;
       position: relative;
     }
-
     .user, .bot {
       background-color: #1e1e1e;
       padding: 10px 15px;
@@ -38,17 +34,14 @@
       max-width: 80%;
       word-wrap: break-word;
     }
-
     .user {
       margin-left: auto;
       background-color: #0059b3;
     }
-
     .bot {
       margin-right: auto;
       background-color: #2a2a2a;
     }
-
     .copy-btn {
       position: absolute;
       top: 5px;
@@ -59,17 +52,14 @@
       font-size: 12px;
       cursor: pointer;
     }
-
     .copy-btn:hover {
       color: #fff;
     }
-
     .input-area {
       display: flex;
       margin-top: 20px;
       gap: 10px;
     }
-
     input[type="text"] {
       flex-grow: 1;
       padding: 12px;
@@ -79,7 +69,6 @@
       background-color: #2a2a2a;
       color: #fff;
     }
-
     button {
       padding: 12px 18px;
       font-size: 16px;
@@ -89,28 +78,23 @@
       border-radius: 8px;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #0056b3;
     }
-
     @media screen and (max-width: 600px) {
       .input-area {
         flex-direction: column;
       }
-
       button {
         width: 100%;
       }
     }
-
     .profile-img {
       width: 30px;
       height: 30px;
       border-radius: 50%;
       margin-right: 10px;
     }
-
   </style>
 </head>
 <body>
@@ -137,39 +121,23 @@
 
       const typingMsg = renderTypingIndicator(text);
 
-      let botResponse = await fetch("https://open-ai21.p.rapidapi.com/conversationllama", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-rapidapi-host": "open-ai21.p.rapidapi.com",
-          "x-rapidapi-key": "ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d"
-        },
-        body: JSON.stringify({
-          messages: conversation,
-          web_access: false
-        })
-      })
-      .then(res => res.json())
-      .then(data => data.result)
-      .catch(() => "Erreur IA.");
+      try {
+        const response = await fetch("https://marcgpt-api.onrender.com/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ conversation })
+        });
 
-      const humanResponse = await fetch("https://chatgpt-42.p.rapidapi.com/aitohuman", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-rapidapi-host": "chatgpt-42.p.rapidapi.com",
-          "x-rapidapi-key": "ab42dda446mshde4ba65d25b85fdp13b83ejsn3965c0519b7d"
-        },
-        body: JSON.stringify({ text: botResponse })
-      })
-      .then(res => res.json())
-      .then(data => data.human || botResponse)
-      .catch(() => botResponse);
+        const data = await response.json();
+        const botReply = data.result || "Réponse vide.";
 
-      conversation.push({ role: "assistant", content: humanResponse });
-
-      typingMsg.remove();
-      renderMessage("bot", humanResponse);
+        conversation.push({ role: "assistant", content: botReply });
+        typingMsg.remove();
+        renderMessage("bot", botReply);
+      } catch (error) {
+        typingMsg.remove();
+        renderMessage("bot", "Erreur de communication avec MarcGPT.");
+      }
     }
 
     function renderTypingIndicator(text) {
@@ -180,9 +148,8 @@
       const bubble = document.createElement("div");
       bubble.className = "bot";
 
-      // Ajout de l'image de profil pour la saisie
       const profileImg = document.createElement("img");
-      profileImg.src = "https://files.fm/u/u37gkxrnph"; // Remplacez par l'URL de ton image de profil
+      profileImg.src = "https://files.fm/u/u37gkxrnph";
       profileImg.className = "profile-img";
 
       const isFrench = /[àâçéèêëîïôûùüÿœ]/i.test(text) || /comment|bonjour|salut|est-ce/i.test(text);
@@ -219,6 +186,6 @@
       div.scrollIntoView({ behavior: "smooth" });
     }
   </script>
-
 </body>
-</html>
+ </html>
+ 
